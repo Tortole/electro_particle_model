@@ -4,8 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-from urllib3 import Retry
-
 import dipole_magnet_model as dmm
 import digital_model as dm
 from coord import Decart
@@ -18,7 +16,7 @@ time_start, time_end, time_step = 0, 100, 0.1
 x_0, y_0, z_0 = 0, 0, 0
 vx_0, vy_0, vz_0 = 10, 2, 3
 q_0, m_0, E_0, B_0 = 0.1, 0.1, 4, 5
-alpha_0 = 0
+alpha_0 = 30
 
 time_steps_count = round((time_end - time_start) / time_step)
 time = np.arange(time_start, time_end, time_step)
@@ -191,19 +189,20 @@ ax.plot(x_dip, y_dip, z_dip)
 # fig.savefig('output\\dipole_field.png')
 # %%
 
-mu = Decart(0, 1, 0)
+flag_write_result_in_file = False
 
+mu = Decart(0, 0, 1)
 time_start, time_end, time_step = 0, 100, 0.1
-x_0, y_0, z_0 = 0.1, 0, 0
-vx_0, vy_0, vz_0 = 0, 0, 0
-q_0, m_0 = 0.1, 0.1
-E_0, B_0 = 1, 1
+x_0, y_0, z_0 = 0.1, 0.1, 0.1
+vx_0, vy_0, vz_0 = 0, -0.2, 1
+q_0, m_0 = 0.001, 0.001
+E_0, B_0 = 4, 3
 alpha_0 = 0
 
 def E_function(x, y, z):
-    # E = Decart(0, 1, 0)
-    # E.length = E_0
-    # return E
+    E = Decart(0, 1, 0)
+    E.length = E_0
+    return E
     E = dmm.calc_B(Decart(x, y, z), mu)
     E.length = E_0
     return E
@@ -228,13 +227,22 @@ x_RKM_v2, y_RKM_v2, z_RKM_v2 = tracker_RKM_system_v2(dm.xFunc_direct,
                                                      q_0, m_0,
                                                      E_function, B_function)
 
-# time = np.arange(time_start, time_end, time_step)
-# x_real, y_real, z_real = track3d(
-#     time, vx_0, vy_0, vz_0, q_0, m_0, E_0, B_0, alpha_0)
-# fig = plt.figure(figsize=(10, 10))
-# ax = fig.add_subplot(111, projection='3d')
-# ax.set_title("Real")
-# ax.plot(x_real, y_real, z_real)
+init_parameters_str = "Initial parameters:\n"\
+                      "time_start, time_end, time_step: "\
+                     f"{time_start}, {time_end}, {time_step}\n"\
+                     f"x_0, y_0, z_0: {x_0}, {y_0}, {z_0}\n"\
+                     f"vx_0, vy_0, vz_0: {vx_0}, {vy_0}, {vz_0}\n"\
+                     f"q_0, m_0: {q_0}, {m_0}\n"\
+                     f"E_0, B_0: {E_0}, {B_0}\n"\
+                     f"mu: {mu}"
+
+if flag_write_result_in_file:
+    output_folder_path = 'output/dipole_model_' + \
+                        datetime.now().strftime('%Y-%m-%d_%H+%M+%S')
+    os.mkdir(output_folder_path)
+
+    with open(output_folder_path + '\\param.txt', 'w') as outfile:
+        outfile.write(init_parameters_str)
 
 x_R_v2 = [el[0] for el in x_RKM_v2]
 y_R_v2 = [el[0] for el in y_RKM_v2]
@@ -242,3 +250,21 @@ z_R_v2 = [el[0] for el in z_RKM_v2]
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111, projection='3d')
 ax.plot(x_R_v2, y_R_v2, z_R_v2)
+if flag_write_result_in_file:
+    fig.savefig(output_folder_path + '\\3d.png')
+
+
+def print_plane(x, y, x_name, y_name):
+    plt.figure(figsize=(10, 6))
+    plt.plot(x, y)
+    plt.title('Движение частицы по плоскости ' + x_name + y_name)
+    plt.xlabel('Координаты по оси ' + x_name)
+    plt.ylabel('Координаты по оси ' + y_name)
+    if flag_write_result_in_file:
+        plt.savefig(output_folder_path + '\\plane_' + x_name + y_name + '.png')
+    plt.show()
+
+
+print_plane(x_R_v2, z_R_v2, 'x', 'z')
+print_plane(x_R_v2, y_R_v2, 'x', 'y')
+print_plane(y_R_v2, z_R_v2, 'y', 'z')
