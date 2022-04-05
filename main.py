@@ -13,10 +13,11 @@ from analytical_model import track3d
 from rkm import tracker_RKM_system, tracker_RKM_system_v2
 # %%
 
-time_start, time_end, time_step = 0, 1000, 0.5
+flag_write_result_in_file = False
+time_start, time_end, time_step = 0, 100, 0.1
 x_0, y_0, z_0 = 0, 0, 0
 vx_0, vy_0, vz_0 = 10, 2, 3
-q_0, m_0, E_0, B_0 = 0.1, 0.1, 10, 10
+q_0, m_0, E_0, B_0 = 0.1, 0.1, 4, 5
 alpha_0 = 0
 
 time_steps_count = round((time_end - time_start) / time_step)
@@ -81,15 +82,16 @@ print(init_parameters_str)
 print()
 print(compare_solution_str)
 
-output_folder_path = 'output/compare_digit_real_' + \
-                     datetime.now().strftime('%Y-%m-%d_%H+%M+%S') + \
-                     '_time_' + str(time_end)
-os.mkdir(output_folder_path)
+if flag_write_result_in_file:
+    output_folder_path = 'output/compare_digit_real_' + \
+                        datetime.now().strftime('%Y-%m-%d_%H+%M+%S') + \
+                        '_time_' + str(time_end)
+    os.mkdir(output_folder_path)
 
-with open(output_folder_path + '\\param.txt', 'w') as outfile:
-    outfile.write(init_parameters_str)
-    outfile.write('\n\n\n')
-    outfile.write(compare_solution_str)
+    with open(output_folder_path + '\\param.txt', 'w') as outfile:
+        outfile.write(init_parameters_str)
+        outfile.write('\n\n\n')
+        outfile.write(compare_solution_str)
 
 # -----------------------------------------------------------
 
@@ -108,7 +110,8 @@ fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111, projection='3d')
 ax.set_title("Real")
 ax.plot(x_real, y_real, z_real)
-fig.savefig(output_folder_path + '\\real_3d.png')
+if flag_write_result_in_file:
+    fig.savefig(output_folder_path + '\\real_3d.png')
 
 
 x_R = [el[0] for el in x_RKM]
@@ -118,7 +121,8 @@ fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111, projection='3d')
 ax.set_title("Digit")
 ax.plot(x_R, y_R, z_R)
-fig.savefig(output_folder_path + '\\digit_3d.png')
+if flag_write_result_in_file:
+    fig.savefig(output_folder_path + '\\digit_3d.png')
 
 # -----------------------------------------------------------
 # Графики зависимости координат x y z от времени,
@@ -144,7 +148,8 @@ for axis, real, digit in [['x', x_real, x_digit],
     plt.title('Движение частицы по оси ' + axis)
     plt.xlabel('Значения времени')
     plt.ylabel('Координаты по оси ' + axis)
-    # plt.savefig(output_folder_path + '\\' + axis + '.png')
+    if flag_write_result_in_file:
+        plt.savefig(output_folder_path + '\\' + axis + '.png')
     plt.show()
 
 # -----------------------------------------------------------
@@ -186,30 +191,30 @@ ax.plot(x_dip, y_dip, z_dip)
 # fig.savefig('output\\dipole_field.png')
 # %%
 
-mu = Decart(0, 0, 1)
+mu = Decart(0, 1, 0)
+
+time_start, time_end, time_step = 0, 100, 0.1
+x_0, y_0, z_0 = 0.1, 0, 0
+vx_0, vy_0, vz_0 = 0, 0, 0
+q_0, m_0 = 0.1, 0.1
+E_0, B_0 = 1, 1
+alpha_0 = 0
 
 def E_function(x, y, z):
-    E = Decart(0, 0, 1)
-    E.length = 1
+    # E = Decart(0, 1, 0)
+    # E.length = E_0
+    # return E
+    E = dmm.calc_B(Decart(x, y, z), mu)
+    E.length = E_0
     return E
-    r = Decart(x, y, z)
-    return dmm.calc_B(r, mu)
 
 def B_function(x, y, z):
-    B = Decart(0, 0, 1)
-    B.length = 1
+    # B = Decart(0, 1, 0)
+    # B.length = B_0
+    # return B
+    B = dmm.calc_B(Decart(x, y, z), mu)
+    B.length = B_0
     return B
-    # r = Decart(x, y, z)
-    # return dmm.calc_B(r, mu)
-
-
-time_start, time_end, time_step = 0, 1000, 0.5
-x_0, y_0, z_0 = 0.1, 0.1, 0.1
-vx_0, vy_0, vz_0 = 1, 1, 1
-q_0, m_0, = 100, 0.1
-
-pos_0 = Decart(0.1, 0.1, 0.1)
-vel_0 = Decart(0, 0, 0)
 
 time_steps_count = round((time_end - time_start) / time_step)
 
@@ -223,9 +228,17 @@ x_RKM_v2, y_RKM_v2, z_RKM_v2 = tracker_RKM_system_v2(dm.xFunc_direct,
                                                      q_0, m_0,
                                                      E_function, B_function)
 
-x_R = [el[0] for el in x_RKM_v2]
-y_R = [el[0] for el in y_RKM_v2]
-z_R = [el[0] for el in z_RKM_v2]
+# time = np.arange(time_start, time_end, time_step)
+# x_real, y_real, z_real = track3d(
+#     time, vx_0, vy_0, vz_0, q_0, m_0, E_0, B_0, alpha_0)
+# fig = plt.figure(figsize=(10, 10))
+# ax = fig.add_subplot(111, projection='3d')
+# ax.set_title("Real")
+# ax.plot(x_real, y_real, z_real)
+
+x_R_v2 = [el[0] for el in x_RKM_v2]
+y_R_v2 = [el[0] for el in y_RKM_v2]
+z_R_v2 = [el[0] for el in z_RKM_v2]
 fig = plt.figure(figsize=(10, 10))
 ax = fig.add_subplot(111, projection='3d')
-ax.plot(x_R, y_R, z_R)
+ax.plot(x_R_v2, y_R_v2, z_R_v2)

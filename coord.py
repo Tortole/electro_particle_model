@@ -136,13 +136,12 @@ class Decart():
                             str(type(other)) + ' types not defined')
 
     def __mul__(self, other):
-        if type(other) == int or type(other) == float or type(other) == np.float64:
-            return Decart(self.x * other, self.y * other, self.z * other)
-        elif type(other) == Decart:
+        if type(other) == Decart:
             return self.x * other.x + self.y * other.y + self.z * other.z
-        else:
-            raise Exception('Multiplication operation for Decart and ' +
-                            str(type(other)) + ' types not defined')
+        return Decart(self.x * other, self.y * other, self.z * other)
+        # else:
+        #     raise Exception('Multiplication operation for Decart and ' +
+        #                     str(type(other)) + ' types not defined')
 
     __rmul__ = __mul__
 
